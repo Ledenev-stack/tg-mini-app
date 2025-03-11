@@ -44,8 +44,8 @@
         }
 
         .btn {
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
             border: none;
             border-radius: 8px;
             padding: 12px 20px;
@@ -55,10 +55,24 @@
             width: 100%;
             margin-bottom: 8px;
             transition: opacity 0.2s;
+            position: relative;
+            z-index: 1;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
         }
 
         .btn:active {
             opacity: 0.8;
+        }
+        
+        /* Увеличиваем область нажатия */
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            z-index: -1;
         }
 
         .btn-secondary {
@@ -350,7 +364,7 @@
                     <label for="transaction-date">Дата</label>
                     <input type="date" id="transaction-date">
                 </div>
-                <button class="btn" onclick="addTransaction()">Добавить транзакцию</button>
+                <button class="btn" id="add-transaction-btn">Добавить транзакцию</button>
             </div>
 
             <div class="card">
@@ -369,7 +383,7 @@
                     <label for="budget-amount">Установить месячный бюджет</label>
                     <input type="number" id="budget-amount" placeholder="Введите сумму">
                 </div>
-                <button class="btn" onclick="setBudget()">Сохранить</button>
+                <button class="btn" id="set-budget-btn">Сохранить</button>
             </div>
 
             <div class="card">
@@ -403,7 +417,7 @@
                     <label for="category-budget-amount">Сумма</label>
                     <input type="number" id="category-budget-amount" placeholder="Введите сумму">
                 </div>
-                <button class="btn" onclick="setCategoryBudget()">Установить</button>
+                <button class="btn" id="set-category-budget-btn">Установить</button>
 
                 <div id="category-budgets" class="budget-list">
                     <!-- Category budgets will be displayed here -->
@@ -460,7 +474,7 @@
                     <label for="loan-rate">Процентная ставка (%)</label>
                     <input type="number" id="loan-rate" placeholder="Введите ставку">
                 </div>
-                <button class="btn" onclick="calculateLoan()">Рассчитать</button>
+                <button class="btn" id="calculate-loan-btn">Рассчитать</button>
                 <div id="loan-result" class="hidden">
                     <div class="form-group">
                         <label>Ежемесячный платеж</label>
@@ -480,21 +494,51 @@
     </div>
 
     <script>
-        // Initialize Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        // Initialize Telegram WebApp safely
+        let tg;
+        try {
+            tg = window.Telegram.WebApp;
+            tg.expand();
+            
+            // Debug info
+            console.log('Telegram WebApp initialized successfully');
+        } catch (e) {
+            console.error('Error initializing Telegram WebApp:', e);
+            // Fallback for testing outside Telegram
+            tg = {
+                expand: () => {},
+                sendData: (data) => { console.log('Data sent:', data); },
+                showPopup: (options) => { alert(options.message); },
+                HapticFeedback: {
+                    notificationOccurred: () => {}
+                },
+                MainButton: {
+                    setText: () => {},
+                    show: () => {}
+                },
+                initDataUnsafe: {
+                    user: {
+                        first_name: 'Тестовый пользователь'
+                    }
+                }
+            };
+        }
         
         // Handle WebApp events
-        tg.onEvent('mainButtonClicked', function() {
-            // This will be triggered when the main button is clicked
-            // We can use this to send data back to the bot
-            tg.sendData(JSON.stringify({
-                action: 'sync_data',
-                transactions: state.transactions,
-                balance: state.balance,
-                budget: state.monthlyBudget
-            }));
-        });
+        try {
+            tg.onEvent('mainButtonClicked', function() {
+                // This will be triggered when the main button is clicked
+                // We can use this to send data back to the bot
+                tg.sendData(JSON.stringify({
+                    action: 'sync_data',
+                    transactions: state.transactions,
+                    balance: state.balance,
+                    budget: state.monthlyBudget
+                }));
+            });
+        } catch (e) {
+            console.error('Error setting up Telegram events:', e);
+        }
 
         // Initialize state
         let state = {
