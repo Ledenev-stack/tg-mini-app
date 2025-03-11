@@ -3,48 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Финансовое мини-приложение</title>
+    <title>Финансовый трекер для пары</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
+            padding: 0;
         }
         
-        h1 {
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 16px;
+            max-width: 100%;
+        }
+        
+        h1, h2, h3 {
+            margin-bottom: 16px;
             text-align: center;
+        }
+        
+        .user-select {
+            display: flex;
+            justify-content: center;
             margin-bottom: 20px;
         }
         
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .balance {
-            text-align: center;
-            font-size: 24px;
-            margin: 20px 0;
-        }
-        
-        .balance-amount {
-            font-size: 36px;
+        .user-btn {
+            flex: 1;
+            max-width: 150px;
+            padding: 12px;
+            margin: 0 8px;
+            border: none;
+            border-radius: 8px;
             font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .user-btn.alexey {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .user-btn.kristina {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .user-btn.joint {
+            background-color: #9b59b6;
+            color: white;
+        }
+        
+        .user-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .user-btn:not(.active) {
+            opacity: 0.7;
+        }
+        
+        .menu {
+            display: flex;
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .menu-item {
+            flex: 1;
+            padding: 12px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .menu-item.active {
+            background-color: #0088cc;
+            color: white;
+        }
+        
+        .section {
+            display: none;
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section.active {
+            display: block;
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
         
-        .form-group label {
+        label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
         }
         
@@ -52,217 +118,683 @@
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 4px;
             font-size: 16px;
-            box-sizing: border-box;
         }
         
-        .btn {
-            display: inline-block;
-            width: 100%;
-            padding: 12px;
-            background-color: #3390ec;
+        button {
+            background-color: #0088cc;
             color: white;
             border: none;
-            border-radius: 5px;
+            padding: 12px 16px;
+            border-radius: 4px;
+            width: 100%;
             font-size: 16px;
-            margin-top: 10px;
-            text-align: center;
             cursor: pointer;
-            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            margin-top: 8px;
         }
         
-        .btn-success {
-            background-color: #2ecc71;
+        .bank-button {
+            background-color: #27ae60;
         }
         
-        .transaction-list {
-            list-style: none;
-            padding: 0;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
         }
+        
+        .stat-card {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 6px 0;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .income { color: #4CAF50; }
+        .expense { color: #F44336; }
+        .debt { color: #FF9800; }
         
         .transaction-item {
-            padding: 10px 0;
+            padding: 12px;
             border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .expense {
-            color: #e74c3c;
+        .transaction-item .user-tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+            font-weight: bold;
+            display: inline-block;
         }
         
-        .income {
-            color: #2ecc71;
+        .transaction-item .user-tag.alexey {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .transaction-item .user-tag.kristina {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .transaction-item .user-tag.joint {
+            background-color: #9b59b6;
+            color: white;
+        }
+        
+        .bank-info {
+            background-color: #f1f8e9;
+            border-left: 4px solid #8bc34a;
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 4px;
+        }
+        
+        .piggy-bank {
+            border-top: 1px solid #ddd;
+            margin-top: 16px;
+            padding-top: 16px;
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 16px;
+        }
+        
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        
+        .tab.active {
+            font-weight: bold;
+            border-bottom: 2px solid #0088cc;
         }
     </style>
 </head>
 <body>
-    <h1>Мои финансы</h1>
+    <h1>Финансовый трекер</h1>
     
-    <div class="card">
-        <div class="balance">
-            <div>Текущий баланс</div>
-            <div class="balance-amount" id="balance">0 ₽</div>
+    <div class="user-select">
+        <button class="user-btn alexey active" onclick="switchUser('alexey')">Алексей</button>
+        <button class="user-btn kristina" onclick="switchUser('kristina')">Кристина</button>
+        <button class="user-btn joint" onclick="switchUser('joint')">Общее</button>
+    </div>
+    
+    <div class="menu">
+        <div class="menu-item active" onclick="showSection('overview')">Обзор</div>
+        <div class="menu-item" onclick="showSection('add')">Добавить</div>
+        <div class="menu-item" onclick="showSection('history')">История</div>
+        <div class="menu-item" onclick="showSection('piggy')">Копилка</div>
+    </div>
+    
+    <div id="overview" class="section active">
+        <h2>Финансовый обзор</h2>
+        <div id="user-name-display" style="text-align: center; margin-bottom: 10px; font-weight: bold;">Алексей</div>
+        
+        <div class="form-group">
+            <label>Текущий баланс:</label>
+            <div class="stat-value income" id="balance">₽0</div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Прибыль в этом месяце</div>
+                <div class="stat-value income" id="month-income">₽0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Расходы в этом месяце</div>
+                <div class="stat-value expense" id="month-expense">₽0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Погашено долгов</div>
+                <div class="stat-value debt" id="debt-paid">₽0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Остаток долга</div>
+                <div class="stat-value debt" id="debt-remaining">₽2,000,000</div>
+            </div>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab active" onclick="switchTab('recent', this)">Последние транзакции</div>
+            <div class="tab" onclick="switchTab('shared', this)">Общие расходы</div>
+        </div>
+        
+        <div id="recent-transactions" class="tab-content">
+            <!-- Последние транзакции будут добавлены через JavaScript -->
+            <div style="text-align: center; padding: 20px; color: #999;">
+                Нет записей
+            </div>
+        </div>
+        
+        <div id="shared-expenses" class="tab-content" style="display: none;">
+            <!-- Общие расходы будут добавлены через JavaScript -->
+            <div style="text-align: center; padding: 20px; color: #999;">
+                Нет общих расходов
+            </div>
         </div>
     </div>
     
-    <div class="card">
+    <div id="add" class="section">
         <h2>Добавить транзакцию</h2>
+        
         <div class="form-group">
-            <label for="amount">Сумма</label>
-            <input type="number" id="amount" placeholder="Введите сумму">
+            <label for="type">Тип транзакции</label>
+            <select id="type">
+                <option value="income">Доход</option>
+                <option value="expense">Расход</option>
+                <option value="debt-payment">Погашение долга</option>
+                <option value="investment">Инвестиция</option>
+                <option value="piggy-bank">В копилку</option>
+            </select>
         </div>
+        
         <div class="form-group">
-            <label for="description">Описание</label>
-            <input type="text" id="description" placeholder="За что платим">
+            <label for="amount">Сумма (₽)</label>
+            <input type="number" id="amount" placeholder="0" min="0">
         </div>
-        <a href="#" class="btn" id="expense-btn">Добавить расход</a>
-        <a href="#" class="btn btn-success" id="income-btn">Добавить доход</a>
+        
+        <div class="form-group" id="shared-expense-group" style="display: none;">
+            <label for="shared">Общий расход?</label>
+            <select id="shared">
+                <option value="no">Нет</option>
+                <option value="yes">Да</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="category">Категория</label>
+            <select id="category">
+                <option value="salary">Зарплата</option>
+                <option value="project">Проект</option>
+                <option value="course">Продажа курса</option>
+                <option value="rent">Аренда</option>
+                <option value="food">Еда</option>
+                <option value="transport">Транспорт</option>
+                <option value="other">Другое</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="note">Примечание</label>
+            <input type="text" id="note" placeholder="Описание (необязательно)">
+        </div>
+        
+        <div id="bank-payment-option" style="display: none;">
+            <div class="form-group">
+                <label for="use-bank">Перевести через банк?</label>
+                <select id="use-bank">
+                    <option value="no">Нет</option>
+                    <option value="yes">Да, выполнить платеж сейчас</option>
+                </select>
+            </div>
+            
+            <div class="bank-info">
+                <p><strong>Примечание:</strong> При выборе платежа через банк, вы будете перенаправлены на страницу подтверждения платежа.</p>
+            </div>
+        </div>
+        
+        <button onclick="addTransaction()">Добавить</button>
     </div>
     
-    <div class="card">
-        <h2>Транзакции</h2>
-        <div id="transactions" class="transaction-list">
-            <div class="transaction-item">Нет транзакций</div>
+    <div id="history" class="section">
+        <h2>История транзакций</h2>
+        
+        <div class="form-group">
+            <label for="history-filter">Фильтр</label>
+            <select id="history-filter" onchange="filterTransactions()">
+                <option value="all">Все транзакции</option>
+                <option value="alexey">Только Алексей</option>
+                <option value="kristina">Только Кристина</option>
+                <option value="joint">Только общие</option>
+                <option value="income">Только доходы</option>
+                <option value="expense">Только расходы</option>
+                <option value="debt-payment">Только погашение долга</option>
+            </select>
+        </div>
+        
+        <div id="transactions-list">
+            <!-- Транзакции будут добавлены через JavaScript -->
+            <div style="text-align: center; padding: 20px; color: #999;">
+                Нет записей
+            </div>
         </div>
     </div>
-
+    
+    <div id="piggy" class="section">
+        <h2>Личная копилка</h2>
+        <div id="piggy-user-name" style="text-align: center; margin-bottom: 10px; font-weight: bold;">Алексей</div>
+        
+        <div class="stat-card" style="margin-bottom: 20px;">
+            <div class="stat-label">Накоплено</div>
+            <div class="stat-value income" id="piggy-balance">₽0</div>
+        </div>
+        
+        <div class="form-group">
+            <label for="piggy-action">Действие</label>
+            <select id="piggy-action">
+                <option value="add">Добавить в копилку</option>
+                <option value="withdraw">Снять из копилки</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="piggy-amount">Сумма (₽)</label>
+            <input type="number" id="piggy-amount" placeholder="0" min="0">
+        </div>
+        
+        <div class="form-group">
+            <label for="piggy-note">Цель/Примечание</label>
+            <input type="text" id="piggy-note" placeholder="Например: На отпуск">
+        </div>
+        
+        <button onclick="updatePiggyBank()">Выполнить</button>
+        
+        <div class="piggy-bank">
+            <h3>История операций</h3>
+            <div id="piggy-history">
+                <!-- История копилки будет добавлена через JavaScript -->
+                <div style="text-align: center; padding: 20px; color: #999;">
+                    Нет операций
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        // Простые функции для хранения данных
+        // Базовые переменные для хранения данных
         let transactions = [];
-        let balance = 0;
+        let piggyBanks = {
+            alexey: { balance: 0, history: [] },
+            kristina: { balance: 0, history: [] }
+        };
+        let initialDebt = 2000000;
+        let debtPaid = 0;
+        let currentUser = 'alexey'; // По умолчанию Алексей
         
-        // Получаем элементы DOM
-        const balanceElement = document.getElementById('balance');
-        const amountInput = document.getElementById('amount');
-        const descriptionInput = document.getElementById('description');
-        const expenseBtn = document.getElementById('expense-btn');
-        const incomeBtn = document.getElementById('income-btn');
-        const transactionsContainer = document.getElementById('transactions');
-        
-        // Добавляем обработчики событий для кнопок
-        if (expenseBtn) {
-            expenseBtn.addEventListener('click', function() {
-                addTransaction('expense');
-            });
+        // Инициализация Telegram WebApp
+        let tgApp;
+        try {
+            tgApp = window.Telegram && window.Telegram.WebApp;
+            if (tgApp) {
+                tgApp.expand();
+                console.log('Telegram WebApp инициализирован');
+            }
+        } catch (e) {
+            console.error('Ошибка Telegram WebApp:', e);
         }
         
-        if (incomeBtn) {
-            incomeBtn.addEventListener('click', function() {
-                addTransaction('income');
-            });
-        }
-        
-        // Функция добавления транзакции
-        function addTransaction(type) {
-            const amount = parseFloat(amountInput.value);
-            const description = descriptionInput.value;
+        // Функция для переключения между пользователями
+        function switchUser(user) {
+            currentUser = user;
             
-            if (isNaN(amount) || amount <= 0) {
+            // Обновляем активные кнопки
+            document.querySelectorAll('.user-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.user-btn.${user}`).classList.add('active');
+            
+            // Обновляем отображение имени пользователя
+            const displayName = user === 'alexey' ? 'Алексей' : user === 'kristina' ? 'Кристина' : 'Общий счет';
+            document.getElementById('user-name-display').textContent = displayName;
+            document.getElementById('piggy-user-name').textContent = displayName;
+            
+            // Скрываем копилку для общего счета
+            if (user === 'joint') {
+                document.querySelector('.menu-item:nth-child(4)').style.display = 'none';
+            } else {
+                document.querySelector('.menu-item:nth-child(4)').style.display = 'block';
+            }
+            
+            // Обновляем страницу копилки
+            updatePiggyBankDisplay();
+            
+            // Обновляем данные на экране
+            updateDashboard();
+            updateTransactionsList();
+        }
+        
+        // Функция для переключения между вкладками
+        function switchTab(tabId, element) {
+            // Убираем активный класс со всех вкладок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Добавляем активный класс текущей вкладке
+            element.classList.add('active');
+            
+            // Скрываем все контенты вкладок
+            document.getElementById('recent-transactions').style.display = 'none';
+            document.getElementById('shared-expenses').style.display = 'none';
+            
+            // Показываем выбранный контент
+            document.getElementById(`${tabId}-${tabId === 'recent' ? 'transactions' : 'expenses'}`).style.display = 'block';
+            
+            // Обновляем данные для выбранной вкладки
+            if (tabId === 'recent') {
+                updateRecentTransactions();
+            } else if (tabId === 'shared') {
+                updateSharedExpenses();
+            }
+        }
+        
+        // Функция для переключения между секциями
+        function showSection(sectionId) {
+            console.log('Переключение на секцию:', sectionId);
+            
+            // Скрываем все секции
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Убираем выделение со всех пунктов меню
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Показываем выбранную секцию
+            const sectionElement = document.getElementById(sectionId);
+            if (sectionElement) {
+                sectionElement.classList.add('active');
+            }
+            
+            // Выделяем соответствующий пункт меню
+            const menuItems = document.querySelectorAll('.menu-item');
+            for (let i = 0; i < menuItems.length; i++) {
+                if (menuItems[i].textContent.toLowerCase().includes(sectionId)) {
+                    menuItems[i].classList.add('active');
+                    break;
+                }
+            }
+            
+            // Обновляем данные в зависимости от секции
+            if (sectionId === 'history') {
+                updateTransactionsList();
+            } else if (sectionId === 'piggy') {
+                updatePiggyBankDisplay();
+            } else if (sectionId === 'add') {
+                updateAddTransactionForm();
+            } else if (sectionId === 'overview') {
+                updateDashboard();
+                updateRecentTransactions();
+                updateSharedExpenses();
+            }
+        }
+        
+        // Функция для добавления транзакции
+        function addTransaction() {
+            const type = document.getElementById('type').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const note = document.getElementById('note').value;
+            const isShared = document.getElementById('shared') && document.getElementById('shared').value === 'yes';
+            const useBank = document.getElementById('use-bank') && document.getElementById('use-bank').value === 'yes';
+            
+            if (!amount || isNaN(amount)) {
                 alert('Пожалуйста, введите корректную сумму');
                 return;
             }
             
-            if (!description) {
-                alert('Пожалуйста, введите описание');
+            // Для копилки перенаправляем на соответствующую функцию
+            if (type === 'piggy-bank') {
+                updatePiggyBank(amount, note, 'add');
                 return;
             }
             
-            // Создаем транзакцию
+            const user = isShared ? 'joint' : currentUser;
+            
             const transaction = {
                 id: Date.now(),
-                type: type,
-                amount: amount,
-                description: description,
-                date: new Date().toLocaleDateString('ru-RU')
+                user,
+                type,
+                amount,
+                category,
+                note,
+                date: new Date().toISOString().split('T')[0],
+                timestamp: new Date().toISOString()
             };
             
-            // Добавляем в массив
+            // Обработка разных типов транзакций
+            if (type === 'debt-payment') {
+                debtPaid += amount;
+                
+                // Если выбрана оплата через банк
+                if (useBank) {
+                    if (confirm('Перейти к оплате через банк?')) {
+                        // Здесь должна быть интеграция с банковским API
+                        alert('Эта функция еще не реализована. В реальном приложении здесь был бы переход к API банка для выполнения платежа.');
+                    }
+                }
+            }
+            
+            // Добавляем транзакцию в массив
             transactions.push(transaction);
             
-            // Обновляем баланс
-            if (type === 'income') {
-                balance += amount;
-            } else {
-                balance -= amount;
-            }
-            
-            // Обновляем отображение
-            updateUI();
+            // Сохраняем данные в localStorage
+            saveData();
             
             // Очищаем форму
-            amountInput.value = '';
-            descriptionInput.value = '';
-            
-            // Уведомляем пользователя
-            alert(`${type === 'income' ? 'Доход' : 'Расход'} добавлен успешно!`);
-        }
-        
-        // Обновление интерфейса
-        function updateUI() {
-            // Обновляем баланс
-            balanceElement.textContent = formatCurrency(balance);
-            
-            // Обновляем список транзакций
-            if (transactions.length === 0) {
-                transactionsContainer.innerHTML = '<div class="transaction-item">Нет транзакций</div>';
-            } else {
-                // Сортируем транзакции (новые сверху)
-                transactions.sort((a, b) => b.id - a.id);
-                
-                // Формируем HTML
-                let html = '';
-                transactions.forEach(transaction => {
-                    const isExpense = transaction.type === 'expense';
-                    html += `
-                        <div class="transaction-item">
-                            <div>${transaction.description} (${transaction.date})</div>
-                            <div class="${isExpense ? 'expense' : 'income'}">
-                                ${isExpense ? '-' : '+'}${formatCurrency(transaction.amount)}
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                transactionsContainer.innerHTML = html;
+            document.getElementById('amount').value = '';
+            document.getElementById('note').value = '';
+            if (document.getElementById('shared')) {
+                document.getElementById('shared').value = 'no';
+            }
+            if (document.getElementById('use-bank')) {
+                document.getElementById('use-bank').value = 'no';
             }
             
-            // Сохраняем данные
-            localStorage.setItem('financeData', JSON.stringify({
-                transactions: transactions,
-                balance: balance
-            }));
-        }
-        
-        // Форматирование валюты
-        function formatCurrency(amount) {
-            return amount.toLocaleString('ru-RU') + ' ₽';
-        }
-        
-        // Загрузка данных при старте
-        function loadData() {
-            const data = localStorage.getItem('financeData');
-            if (data) {
-                const parsedData = JSON.parse(data);
-                transactions = parsedData.transactions || [];
-                balance = parsedData.balance || 0;
-                updateUI();
+            // Показываем уведомление
+            alert('Транзакция добавлена');
+            
+            // Переключаемся на обзор
+            showSection('overview');
+            
+            // Обновляем информацию на экране
+            updateDashboard();
+            updateRecentTransactions();
+            if (isShared) {
+                updateSharedExpenses();
             }
         }
         
-        // Инициализация Telegram WebApp
-        document.addEventListener('DOMContentLoaded', function() {
-            // Инициализируем Telegram WebApp
-            const tg = window.Telegram.WebApp;
-            tg.expand();
+        // Функция для обновления панели обзора
+        function updateDashboard() {
+            // Расчет баланса и других показателей
+            let balance = 0;
+            let monthIncome = 0;
+            let monthExpense = 0;
             
-            // Загружаем данные
-            loadData();
+            const currentDate = new Date();
+            const currentMonth = currentDate.getMonth();
+            const currentYear = currentDate.getFullYear();
             
-            // Добавляем отладочную информацию
-            document.body.addEventListener('click', function(e) {
-                console.log('Clicked element:', e.target);
+            // Фильтруем транзакции для текущего пользователя или показываем все для общего счета
+            const userTransactions = currentUser === 'joint' 
+                ? transactions 
+                : transactions.filter(t => t.user === currentUser || t.user === 'joint');
+            
+            userTransactions.forEach(transaction => {
+                const transactionDate = new Date(transaction.date);
+                const amount = transaction.amount;
+                
+                if (transaction.type === 'income') {
+                    balance += amount;
+                    
+                    if (transactionDate.getMonth() === currentMonth && 
+                        transactionDate.getFullYear() === currentYear) {
+                        monthIncome += amount;
+                    }
+                } else if (transaction.type === 'expense') {
+                    balance -= amount;
+                    
+                    if (transactionDate.getMonth() === currentMonth && 
+                        transactionDate.getFullYear() === currentYear) {
+                        monthExpense += amount;
+                    }
+                }
             });
-        });
-    </script>
-</body>
-</html>
+            
+            // Обновление элементов интерфейса
+            document.getElementById('balance').textContent = '₽' + formatNumber(balance);
+            document.getElementById('month-income').textContent = '₽' + formatNumber(monthIncome);
+            document.getElementById('month-expense').textContent = '₽' + formatNumber(monthExpense);
+            document.getElementById('debt-paid').textContent = '₽' + formatNumber(debtPaid);
+            document.getElementById('debt-remaining').textContent = '₽' + formatNumber(initialDebt - debtPaid);
+        }
+        
+        // Обновление последних транзакций
+        function updateRecentTransactions() {
+            const transactionsContainer = document.getElementById('recent-transactions');
+            
+            // Фильтруем транзакции для текущего пользователя или показываем все для общего счета
+            const userTransactions = currentUser === 'joint' 
+                ? transactions 
+                : transactions.filter(t => t.user === currentUser || t.user === 'joint');
+            
+            // Сортировка транзакций по дате (сначала новые)
+            const sortedTransactions = [...userTransactions].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            ).slice(0, 5); // Берем только 5 последних
+            
+            if (sortedTransactions.length === 0) {
+                transactionsContainer.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #999;">
+                        Нет записей
+                    </div>
+                `;
+                return;
+            }
+            
+            transactionsContainer.innerHTML = '';
+            
+            sortedTransactions.forEach(transaction => {
+                addTransactionToList(transaction, transactionsContainer);
+            });
+        }
+        
+        // Обновление общих расходов
+        function updateSharedExpenses() {
+            const expensesContainer = document.getElementById('shared-expenses');
+            
+            // Фильтруем только общие транзакции типа расход
+            const sharedExpenses = transactions.filter(t => 
+                t.user === 'joint' && t.type === 'expense'
+            );
+            
+            // Сортировка по дате (сначала новые)
+            const sortedExpenses = [...sharedExpenses].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            if (sortedExpenses.length === 0) {
+                expensesContainer.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #999;">
+                        Нет общих расходов
+                    </div>
+                `;
+                return;
+            }
+            
+            expensesContainer.innerHTML = '';
+            
+            sortedExpenses.forEach(transaction => {
+                addTransactionToList(transaction, expensesContainer);
+            });
+        }
+        
+        // Добавление транзакции в список
+        function addTransactionToList(transaction, container) {
+            const formattedDate = new Date(transaction.date).toLocaleDateString('ru-RU');
+            
+            let typeText = '';
+            let typeClass = '';
+            
+            switch(transaction.type) {
+                case 'income': 
+                    typeText = 'Доход'; 
+                    typeClass = 'income';
+                    break;
+                case 'expense': 
+                    typeText = 'Расход'; 
+                    typeClass = 'expense';
+                    break;
+                case 'debt-payment': 
+                    typeText = 'Погашение долга'; 
+                    typeClass = 'debt';
+                    break;
+                case 'investment': 
+                    typeText = 'Инвестиция'; 
+                    typeClass = 'debt';
+                    break;
+                case 'piggy-bank': 
+                    typeText = 'В копилку'; 
+                    typeClass = 'income';
+                    break;
+            }
+            
+            const userTag = transaction.user === 'alexey' ? 'А' : transaction.user === 'kristina' ? 'К' : 'Общее';
+            const userTagClass = transaction.user;
+            
+            const transactionElement = document.createElement('div');
+            transactionElement.className = 'transaction-item';
+            
+            transactionElement.innerHTML = `
+                <div>
+                    <div>
+                        <strong>${typeText}</strong> 
+                        ${transaction.note ? '- ' + transaction.note : ''}
+                        <span class="user-tag ${userTagClass}">${userTag}</span>
+                    </div>
+                    <div style="font-size: 12px; color: #999;">${formattedDate} - ${transaction.category}</div>
+                </div>
+                <div class="${typeClass}" style="font-weight: bold;">₽${formatNumber(transaction.amount)}</div>
+            `;
+            
+            container.appendChild(transactionElement);
+        }
+        
+        // Функция для обновления формы добавления транзакции
+        function updateAddTransactionForm() {
+            const typeSelect = document.getElementById('type');
+            const sharedGroup = document.getElementById('shared-expense-group');
+            const bankPaymentOption = document.getElementById('bank-payment-option');
+            
+            // Обновляем опции в зависимости от выбранного типа
+            typeSelect.onchange = function() {
+                const type = this.value;
+                
+                // Показываем/скрываем опцию общего расхода только для расходов
+                sharedGroup.style.display = type === 'expense' ? 'block' : 'none';
+                
+                // Показываем/скрываем опцию банковского платежа только для погашения долга
+                bankPaymentOption.style.display = type === 'debt-payment' ? 'block' : 'none';
+                
+                // Обновляем категории в зависимости от типа
+                updateCategories(type);
+            };
+            
+            // Вызываем изменение для инициализации формы
+            typeSelect.onchange();
+        }
+        
+        // Обновление категорий в зависимости от типа транзак
