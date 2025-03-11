@@ -3,71 +3,794 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Мини-приложение</title>
+    <title>Финансовое мини-приложение</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-link-color: #2678b6;
+            --tg-theme-button-color: #3390ec;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f3f3f3;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            padding: 20px;
-            color: var(--tg-theme-text-color, #000);
-            background-color: var(--tg-theme-bg-color, #fff);
+            margin: 0;
+            padding: 0;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
         }
-        .button {
-            background-color: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #fff);
+
+        .container {
+            padding: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 {
+            font-weight: 600;
+        }
+
+        .card {
+            background-color: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
             border: none;
             border-radius: 8px;
-            padding: 10px 20px;
+            padding: 12px 20px;
             font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            margin-top: 20px;
+            width: 100%;
+            margin-bottom: 8px;
+            transition: opacity 0.2s;
         }
-        .card {
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+
+        .btn:active {
+            opacity: 0.8;
         }
+
+        .btn-secondary {
+            background-color: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            border: 1px solid var(--tg-theme-hint-color);
+        }
+
+        .tab-container {
+            display: flex;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--tg-theme-hint-color);
+        }
+
+        .tab {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-weight: 500;
+            opacity: 0.7;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            opacity: 1;
+            border-bottom: 2px solid var(--tg-theme-button-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--tg-theme-hint-color);
+            border-radius: 8px;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .transaction-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .transaction-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--tg-theme-hint-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .expense {
+            color: #e74c3c;
+        }
+
+        .income {
+            color: #2ecc71;
+        }
+
+        .balance-card {
+            text-align: center;
+            padding: 24px 16px;
+        }
+
+        .balance-title {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color);
+            margin-bottom: 8px;
+        }
+
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .budget-progress {
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: var(--tg-theme-hint-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--tg-theme-button-color);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--tg-theme-hint-color);
+            margin-top: 4px;
+        }
+
+        .calculator {
+            background-color: var(--tg-theme-bg-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .calculator-display {
+            padding: 16px;
+            text-align: right;
+            font-size: 24px;
+            border-bottom: 1px solid var(--tg-theme-hint-color);
+        }
+
+        .calculator-keys {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background-color: var(--tg-theme-hint-color);
+        }
+
+        .calculator-key {
+            background-color: var(--tg-theme-bg-color);
+            border: none;
+            padding: 16px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .calculator-key.operator {
+            background-color: var(--tg-theme-secondary-bg-color);
+        }
+
+        .calculator-key.equal {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            margin-top: 16px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .category-pill {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 4px;
+            color: white;
+        }
+
+        .category-food { background-color: #e74c3c; }
+        .category-transport { background-color: #3498db; }
+        .category-entertainment { background-color: #9b59b6; }
+        .category-housing { background-color: #f1c40f; }
+        .category-health { background-color: #2ecc71; }
+        .category-other { background-color: #95a5a6; }
+        .category-salary { background-color: #27ae60; }
+        .category-gift { background-color: #d35400; }
     </style>
 </head>
 <body>
-    <div id="app">
-        <h1>Моё первое мини-приложение</h1>
-        
-        <div class="card">
-            <p>Добро пожаловать в Telegram мини-приложение!</p>
-            <p>Имя пользователя: <span id="username">Загрузка...</span></p>
+    <div class="container">
+        <h1>Мои финансы</h1>
+
+        <div class="tab-container">
+            <div class="tab active" data-tab="dashboard">Главная</div>
+            <div class="tab" data-tab="transactions">Транзакции</div>
+            <div class="tab" data-tab="budget">Бюджет</div>
+            <div class="tab" data-tab="calculator">Калькулятор</div>
         </div>
-        
-        <button class="button" id="mainButton">Отправить данные</button>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="card balance-card">
+                <div class="balance-title">Текущий баланс</div>
+                <div class="balance-amount" id="balance-amount">0 ₽</div>
+                <div class="balance-subtitle">
+                    <span class="income">+0 ₽</span> / <span class="expense">-0 ₽</span> в этом месяце
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Расходы по категориям</h3>
+                <div class="chart-container">
+                    <canvas id="expensesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Последние транзакции</h3>
+                <ul class="transaction-list" id="recent-transactions">
+                    <li class="transaction-item">
+                        <div>
+                            <div>Загрузка транзакций...</div>
+                        </div>
+                    </li>
+                </ul>
+                <button class="btn" onclick="switchTab('transactions')">Все транзакции</button>
+            </div>
+
+            <div class="card">
+                <h3>Быстрое добавление</h3>
+                <div class="form-group">
+                    <label for="quick-amount">Сумма</label>
+                    <input type="number" id="quick-amount" placeholder="Введите сумму">
+                </div>
+                <div class="form-group">
+                    <label for="quick-category">Категория</label>
+                    <select id="quick-category">
+                        <option value="food">Питание</option>
+                        <option value="transport">Транспорт</option>
+                        <option value="entertainment">Развлечения</option>
+                        <option value="housing">Жилье</option>
+                        <option value="health">Здоровье</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="addQuickExpense()">Добавить расход</button>
+                <button class="btn btn-secondary" onclick="switchTab('transactions')">Добавить подробно</button>
+            </div>
+        </div>
+
+        <!-- Transactions Tab -->
+        <div id="transactions" class="tab-content">
+            <div class="card">
+                <h3>Добавить транзакцию</h3>
+                <div class="form-group">
+                    <label for="transaction-type">Тип</label>
+                    <select id="transaction-type">
+                        <option value="expense">Расход</option>
+                        <option value="income">Доход</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transaction-amount">Сумма</label>
+                    <input type="number" id="transaction-amount" placeholder="Введите сумму">
+                </div>
+                <div class="form-group">
+                    <label for="transaction-category">Категория</label>
+                    <select id="transaction-category">
+                        <optgroup label="Расходы">
+                            <option value="food">Питание</option>
+                            <option value="transport">Транспорт</option>
+                            <option value="entertainment">Развлечения</option>
+                            <option value="housing">Жилье</option>
+                            <option value="health">Здоровье</option>
+                            <option value="other">Другое</option>
+                        </optgroup>
+                        <optgroup label="Доходы">
+                            <option value="salary">Зарплата</option>
+                            <option value="gift">Подарок</option>
+                            <option value="other_income">Другое</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transaction-description">Описание</label>
+                    <input type="text" id="transaction-description" placeholder="Введите описание">
+                </div>
+                <div class="form-group">
+                    <label for="transaction-date">Дата</label>
+                    <input type="date" id="transaction-date">
+                </div>
+                <button class="btn" onclick="addTransaction()">Добавить транзакцию</button>
+            </div>
+
+            <div class="card">
+                <h3>История транзакций</h3>
+                <ul class="transaction-list" id="transactions-list">
+                    <!-- Transactions will be added here -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Budget Tab -->
+        <div id="budget" class="tab-content">
+            <div class="card">
+                <h3>Месячный бюджет</h3>
+                <div class="form-group">
+                    <label for="budget-amount">Установить месячный бюджет</label>
+                    <input type="number" id="budget-amount" placeholder="Введите сумму">
+                </div>
+                <button class="btn" onclick="setBudget()">Сохранить</button>
+            </div>
+
+            <div class="card">
+                <h3>Текущий прогресс</h3>
+                <div class="budget-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="budget-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-labels">
+                        <div>0 ₽</div>
+                        <div id="budget-limit">0 ₽</div>
+                    </div>
+                </div>
+                <div id="budget-status">Бюджет не установлен</div>
+            </div>
+
+            <div class="card">
+                <h3>Бюджет по категориям</h3>
+                <div class="form-group">
+                    <label for="category-budget-category">Категория</label>
+                    <select id="category-budget-category">
+                        <option value="food">Питание</option>
+                        <option value="transport">Транспорт</option>
+                        <option value="entertainment">Развлечения</option>
+                        <option value="housing">Жилье</option>
+                        <option value="health">Здоровье</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category-budget-amount">Сумма</label>
+                    <input type="number" id="category-budget-amount" placeholder="Введите сумму">
+                </div>
+                <button class="btn" onclick="setCategoryBudget()">Установить</button>
+
+                <div id="category-budgets" class="budget-list">
+                    <!-- Category budgets will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculator Tab -->
+        <div id="calculator" class="tab-content">
+            <div class="card">
+                <h3>Финансовый калькулятор</h3>
+                <div class="calculator">
+                    <div class="calculator-display" id="calc-display">0</div>
+                    <div class="calculator-keys">
+                        <button class="calculator-key" onclick="clearCalculator()">C</button>
+                        <button class="calculator-key" onclick="appendToCalculator('(')">(</button>
+                        <button class="calculator-key" onclick="appendToCalculator(')')">)</button>
+                        <button class="calculator-key operator" onclick="appendToCalculator('/')">/</button>
+                        
+                        <button class="calculator-key" onclick="appendToCalculator('7')">7</button>
+                        <button class="calculator-key" onclick="appendToCalculator('8')">8</button>
+                        <button class="calculator-key" onclick="appendToCalculator('9')">9</button>
+                        <button class="calculator-key operator" onclick="appendToCalculator('*')">×</button>
+                        
+                        <button class="calculator-key" onclick="appendToCalculator('4')">4</button>
+                        <button class="calculator-key" onclick="appendToCalculator('5')">5</button>
+                        <button class="calculator-key" onclick="appendToCalculator('6')">6</button>
+                        <button class="calculator-key operator" onclick="appendToCalculator('-')">-</button>
+                        
+                        <button class="calculator-key" onclick="appendToCalculator('1')">1</button>
+                        <button class="calculator-key" onclick="appendToCalculator('2')">2</button>
+                        <button class="calculator-key" onclick="appendToCalculator('3')">3</button>
+                        <button class="calculator-key operator" onclick="appendToCalculator('+')">+</button>
+                        
+                        <button class="calculator-key" onclick="appendToCalculator('0')">0</button>
+                        <button class="calculator-key" onclick="appendToCalculator('.')">.</button>
+                        <button class="calculator-key" onclick="backspaceCalculator()">⌫</button>
+                        <button class="calculator-key equal" onclick="calculateResult()">=</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Кредитный калькулятор</h3>
+                <div class="form-group">
+                    <label for="loan-amount">Сумма кредита</label>
+                    <input type="number" id="loan-amount" placeholder="Введите сумму">
+                </div>
+                <div class="form-group">
+                    <label for="loan-term">Срок (месяцев)</label>
+                    <input type="number" id="loan-term" placeholder="Введите срок">
+                </div>
+                <div class="form-group">
+                    <label for="loan-rate">Процентная ставка (%)</label>
+                    <input type="number" id="loan-rate" placeholder="Введите ставку">
+                </div>
+                <button class="btn" onclick="calculateLoan()">Рассчитать</button>
+                <div id="loan-result" class="hidden">
+                    <div class="form-group">
+                        <label>Ежемесячный платеж</label>
+                        <div id="loan-monthly-payment">0 ₽</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Общая сумма</label>
+                        <div id="loan-total-payment">0 ₽</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Переплата</label>
+                        <div id="loan-overpayment">0 ₽</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Инициализация Telegram WebApp
+        // Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Расширяем на весь экран
+        tg.expand();
         
-        // Инициализация данных пользователя
-        document.addEventListener('DOMContentLoaded', function() {
-            // Получаем данные пользователя
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const user = tg.initDataUnsafe.user;
-                document.getElementById('username').textContent = user.first_name || 'Гость';
+        // Handle WebApp events
+        tg.onEvent('mainButtonClicked', function() {
+            // This will be triggered when the main button is clicked
+            // We can use this to send data back to the bot
+            tg.sendData(JSON.stringify({
+                action: 'sync_data',
+                transactions: state.transactions,
+                balance: state.balance,
+                budget: state.monthlyBudget
+            }));
+        });
+
+        // Initialize state
+        let state = {
+            transactions: [],
+            balance: 0,
+            monthlyBudget: 0,
+            categoryBudgets: {},
+            calculatorDisplay: '0',
+            currentDate: new Date()
+        };
+
+        // Load data from local storage
+        function loadData() {
+            const savedData = localStorage.getItem('financeAppData');
+            if (savedData) {
+                state = JSON.parse(savedData);
+                updateUI();
+            } else {
+                // Set today's date for new transaction
+                document.getElementById('transaction-date').valueAsDate = new Date();
+                
+                // Add sample data for new users
+                if (state.transactions.length === 0) {
+                    addSampleData();
+                }
+            }
+        }
+
+        // Save data to local storage
+        function saveData() {
+            localStorage.setItem('financeAppData', JSON.stringify(state));
+        }
+
+        // Add sample data for new users
+        function addSampleData() {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            state.transactions = [
+                {
+                    id: 1,
+                    type: 'expense',
+                    amount: 500,
+                    category: 'food',
+                    description: 'Обед',
+                    date: today.toISOString().split('T')[0]
+                },
+                {
+                    id: 2,
+                    type: 'expense',
+                    amount: 200,
+                    category: 'transport',
+                    description: 'Такси',
+                    date: yesterday.toISOString().split('T')[0]
+                },
+                {
+                    id: 3,
+                    type: 'income',
+                    amount: 50000,
+                    category: 'salary',
+                    description: 'Зарплата',
+                    date: yesterday.toISOString().split('T')[0]
+                }
+            ];
+            
+            state.monthlyBudget = 40000;
+            state.categoryBudgets = {
+                food: 15000,
+                transport: 5000,
+                entertainment: 8000
+            };
+            
+            updateBalance();
+            saveData();
+            updateUI();
+        }
+
+        // Update UI elements
+        function updateUI() {
+            updateBalance();
+            updateTransactionsList();
+            updateRecentTransactions();
+            updateBudgetProgress();
+            updateCategoryBudgets();
+            updateExpensesChart();
+        }
+
+        // Update balance
+        function updateBalance() {
+            let income = 0;
+            let expense = 0;
+            
+            state.transactions.forEach(transaction => {
+                if (transaction.type === 'income') {
+                    income += transaction.amount;
+                } else {
+                    expense += transaction.amount;
+                }
+            });
+            
+            state.balance = income - expense;
+            
+            document.getElementById('balance-amount').textContent = formatCurrency(state.balance);
+            
+            // Update monthly income/expense
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            let monthlyIncome = 0;
+            let monthlyExpense = 0;
+            
+            state.transactions.forEach(transaction => {
+                const transactionDate = new Date(transaction.date);
+                if (transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear) {
+                    if (transaction.type === 'income') {
+                        monthlyIncome += transaction.amount;
+                    } else {
+                        monthlyExpense += transaction.amount;
+                    }
+                }
+            });
+            
+            document.querySelector('.balance-subtitle .income').textContent = '+' + formatCurrency(monthlyIncome);
+            document.querySelector('.balance-subtitle .expense').textContent = '-' + formatCurrency(monthlyExpense);
+        }
+
+        // Update transactions list
+        function updateTransactionsList() {
+            const transactionsList = document.getElementById('transactions-list');
+            transactionsList.innerHTML = '';
+            
+            if (state.transactions.length === 0) {
+                transactionsList.innerHTML = '<li class="transaction-item">Нет транзакций</li>';
+                return;
             }
             
-            // Настраиваем главную кнопку
-            const mainButton = document.getElementById('mainButton');
-            mainButton.addEventListener('click', function() {
-                // При нажатии отправляем данные обратно в бота
-                tg.sendData(JSON.stringify({
-                    action: 'button_clicked',
-                    timestamp: Date.now()
-                }));
-                
-                // Или можно просто закрыть мини-приложение
-                // tg.close();
+            // Sort transactions by date (newest first)
+            const sortedTransactions = [...state.transactions].sort((a, b) => {
+                return new Date(b.date) - new Date(a.date);
             });
-        });
-    </script>
-</body>
-</html>
+            
+            sortedTransactions.forEach(transaction => {
+                const li = document.createElement('li');
+                li.className = 'transaction-item';
+                
+                const categoryClass = `category-${transaction.category}`;
+                const categoryName = getCategoryName(transaction.category);
+                
+                li.innerHTML = `
+                    <div>
+                        <div>${transaction.description}</div>
+                        <div style="font-size: 12px; color: var(--tg-theme-hint-color);">
+                            ${formatDate(transaction.date)}
+                            <span class="category-pill ${categoryClass}">${categoryName}</span>
+                        </div>
+                    </div>
+                    <div class="${transaction.type === 'expense' ? 'expense' : 'income'}">
+                        ${transaction.type === 'expense' ? '-' : '+'}${formatCurrency(transaction.amount)}
+                    </div>
+                `;
+                
+                transactionsList.appendChild(li);
+            });
+        }
+
+        // Update recent transactions
+        function updateRecentTransactions() {
+            const recentTransactions = document.getElementById('recent-transactions');
+            recentTransactions.innerHTML = '';
+            
+            if (state.transactions.length === 0) {
+                recentTransactions.innerHTML = '<li class="transaction-item">Нет транзакций</li>';
+                return;
+            }
+            
+            // Sort transactions by date (newest first) and take only 3
+            const sortedTransactions = [...state.transactions]
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 3);
+            
+            sortedTransactions.forEach(transaction => {
+                const li = document.createElement('li');
+                li.className = 'transaction-item';
+                
+                const categoryClass = `category-${transaction.category}`;
+                const categoryName = getCategoryName(transaction.category);
+                
+                li.innerHTML = `
+                    <div>
+                        <div>${transaction.description}</div>
+                        <div style="font-size: 12px; color: var(--tg-theme-hint-color);">
+                            ${formatDate(transaction.date)}
+                            <span class="category-pill ${categoryClass}">${categoryName}</span>
+                        </div>
+                    </div>
+                    <div class="${transaction.type === 'expense' ? 'expense' : 'income'}">
+                        ${transaction.type === 'expense' ? '-' : '+'}${formatCurrency(transaction.amount)}
+                    </div>
+                `;
+                
+                recentTransactions.appendChild(li);
+            });
+        }
+
+        // Update budget progress
+        function updateBudgetProgress() {
+            const progressFill = document.getElementById('budget-progress-fill');
+            const budgetLimit = document.getElementById('budget-limit');
+            const budgetStatus = document.getElementById('budget-status');
+            
+            if (state.monthlyBudget <= 0) {
+                progressFill.style.width = '0%';
+                budgetLimit.textContent = '0 ₽';
+                budgetStatus.textContent = 'Бюджет не установлен';
+                return;
+            }
+            
+            // Calculate current month expenses
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            let monthlyExpense = 0;
+            
+            state.transactions.forEach(transaction => {
+                const transactionDate = new Date(transaction.date);
+                if (transactionDate.getMonth() === currentMonth && 
+                    transactionDate.getFullYear() === currentYear && 
+                    transaction.type === 'expense') {
+                    monthlyExpense += transaction.amount;
+                }
+            });
+            
+            const percentage = Math.min(100, (monthlyExpense / state.monthlyBudget) * 100);
+            
+            progressFill.style.width = `${percentage}%`;
+            budgetLimit.textContent = formatCurrency(state.monthlyBudget);
+            
+            if (percentage < 70) {
+                budgetStatus.textContent = `Вы потратили ${formatCurrency(monthlyExpense)} из ${formatCurrency(state.monthlyBudget)}`;
+                budgetStatus.className = '';
+            } else if (percentage < 90) {
+                budgetStatus.textContent = `Внимание! Вы использовали ${Math.round(percentage)}% бюджета`;
+                budgetStatus.className = 'warning';
+            } else {
+                budgetStatus.textContent = `Превышение бюджета! ${Math.round(percentage)}% использовано`;
+                budgetStatus.className = 'danger';
+            }
+        }
+
+        // Update category budgets
+        function updateCategoryBudgets() {
+            const categoryBudgetsContainer = document.getElementById('category-budgets');
+            categoryBudgetsContainer.innerHTML = '';
+            
+            if (Object.keys(state.categoryBudgets).length === 0) {
+                categoryBudgetsContainer.innerHTML = '<div style="padding: 12px;">Бюджеты по категориям не установлены</div>';
+                return;
+            }
+            
+            // Calculate current month expenses by category
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            const categoryExpenses = {};
+            
+            state.transactions.forEach(transaction => {
+                const transactionDate = new Date(transaction.date);
+                if (transactionDate.getMonth() === currentMonth && 
+                    transactionDate.getFullYear() === currentYear && 
+                    transaction.type === 'expense') {
+                    categoryExpenses[transaction.category] = (categoryExpenses[transaction.category] || 0) + transaction.amount;
+                }
+            });
+            
+            for (const category in state.categoryBudgets) {
+                const budget = state.categoryBudgets[category];
+                const spent = categoryExpenses[category] || 0;
+                const percentage = Math.min(100, (spent / budget) * 100);
+                
+                const categoryName = getCategoryName(category);
+                const categoryClass = `category-${category}`;
+                
+                const div = document.createElement('div');
+                div.className = 'budget-item';
+                div.innerHTML = `
+                    <div style="padding: 12px; border-bottom: 1px solid var(--tg-theme-hint-color);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <div><span class="category-pill ${categoryClass}">${categoryName}</span></div>
+                            <div>${formatCurrency(spent)} / ${formatCurrency(budget)}</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%; background-color: ${percentage > 90 ? '#e74c3c' : 'var(--tg-theme-button-color)'}"></div>
+                        </div>
+                    </div>
+                `;
+                
+                categoryBudgetsContainer.appendChild(div);
+            }
